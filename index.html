@@ -58,30 +58,6 @@
             margin: 5px 0;
             margin-left: 20px;
         }
-        .setup-area {
-            background: #e3f2fd;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        .setup-area label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: #1565c0;
-        }
-        .setup-area input {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-        .setup-area p {
-            font-size: 12px;
-            color: #666;
-        }
         #game-area {
             display: none;
         }
@@ -120,7 +96,7 @@
             display: flex;
             gap: 10px;
         }
-        input {
+        input[type="text"] {
             flex: 1;
             padding: 12px 20px;
             border: 2px solid #ddd;
@@ -128,7 +104,7 @@
             font-size: 16px;
             outline: none;
         }
-        input:focus {
+        input[type="text"]:focus {
             border-color: #c41e3a;
         }
         button {
@@ -185,14 +161,7 @@
         <h1>🎭 潜伏猜人游戏</h1>
         <p class="subtitle">我是《潜伏》里的谁？</p>
         
-        <div class="setup-area" id="setup-area">
-            <label>🔑 首次使用请输入 API Key：</label>
-            <input type="password" id="api-key" placeholder="sk-cp-xxx">
-            <button onclick="saveApiKey()" style="width:100%">保存并开始</button>
-            <p>💡 API Key 仅保存在浏览器本地，不会发送给任何人</p>
-        </div>
-
-        <div class="rules" id="rules" style="display:none">
+        <div class="rules">
             <strong>游戏规则：</strong>
             <ul>
                 <li>我扮演《潜伏》中的一个角色</li>
@@ -204,7 +173,7 @@
             </ul>
         </div>
 
-        <button class="start-btn" id="start-btn" onclick="startGame()" style="display:none">开始游戏</button>
+        <button class="start-btn" onclick="startGame()">开始游戏</button>
 
         <div id="game-area">
             <div class="chances" id="chances">还剩 10 次机会</div>
@@ -224,8 +193,6 @@
     </div>
 
     <script>
-        // 从本地存储获取 API Key
-        let API_KEY = localStorage.getItem('minimax_api_key');
         const API_URL = '/api/chat';
 
         // 潜伏角色列表
@@ -248,34 +215,13 @@
         let gameOver = false;
         let chances = 10;
 
-        // 检查是否已有 API Key
-        if (API_KEY) {
-            document.getElementById('setup-area').style.display = 'none';
-            document.getElementById('rules').style.display = 'block';
-            document.getElementById('start-btn').style.display = 'block';
-        }
-
-        function saveApiKey() {
-            const input = document.getElementById('api-key');
-            const key = input.value.trim();
-            if (key.startsWith('sk-cp-')) {
-                localStorage.setItem('minimax_api_key', key);
-                API_KEY = key;
-                document.getElementById('setup-area').style.display = 'none';
-                document.getElementById('rules').style.display = 'block';
-                document.getElementById('start-btn').style.display = 'block';
-            } else {
-                alert('请输入有效的 MiniMax API Key（以 sk-cp- 开头）');
-            }
-        }
-
         function startGame() {
             currentCharacter = characters[Math.floor(Math.random() * characters.length)];
             gameOver = false;
             chances = 10;
             
-            document.getElementById('start-btn').style.display = 'none';
-            document.getElementById('rules').style.display = 'none';
+            document.querySelector('.start-btn').style.display = 'none';
+            document.querySelector('.rules').style.display = 'none';
             document.getElementById('game-area').style.display = 'block';
             document.getElementById('result-area').style.display = 'none';
             document.getElementById('chances').textContent = `还剩 ${chances} 次机会`;
@@ -287,10 +233,6 @@
         }
 
         async function sendMessage() {
-            if (!API_KEY) {
-                alert('请先输入 API Key');
-                return;
-            }
             if (gameOver) return;
             if (chances <= 0) {
                 endGame(false, '次数用尽！');
@@ -344,7 +286,7 @@
                     message === '你是余则成吗' || message === '你是翠平吗' || 
                     message === '你是吴敬中吗' || message === '你是李涯吗' || 
                     message === '你是陆桥山吗' || message === '你是廖三民吗' || 
-                    message === '你是穆晚秋吗' || message === '你是谢若琳吗' ||
+                    message === '你是穆晚秋吗' || message === '你是谢若林吗' ||
                     message === '你是左蓝吗' || message === '你是马奎吗' ||
                     message === '你是秋掌柜吗' || message === '你是周亚夫吗';
                 
@@ -403,8 +345,8 @@
 
         function restartGame() {
             document.getElementById('result-area').style.display = 'none';
-            document.getElementById('start-btn').style.display = 'block';
-            document.getElementById('rules').style.display = 'block';
+            document.querySelector('.start-btn').style.display = 'block';
+            document.querySelector('.rules').style.display = 'block';
         }
 
         function handleKeyPress(event) {
