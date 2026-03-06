@@ -195,20 +195,104 @@
     <script>
         const API_URL = '/api/chat';
 
-        // 潜伏角色列表
+        // 潜伏角色详细背景
         const characters = [
-            { name: '余则成', emoji: '👨‍💼', desc: '军统天津站副站长，实际是中共地下党员', faction: '中共' },
-            { name: '翠平', emoji: '👩', desc: '余则成假妻子，中共女游击队员', faction: '中共' },
-            { name: '左蓝', emoji: '👩‍💼', desc: '余则成女友，中共地下党员，牺牲了', faction: '中共' },
-            { name: '吴敬中', emoji: '👮', desc: '天津站站长，老谋深算', faction: '国军' },
-            { name: '李涯', emoji: '👨‍💻', desc: '军统行动队队长，执着果敢', faction: '国军' },
-            { name: '陆桥山', emoji: '👨‍⚖️', desc: '军统情报处主任', faction: '国军' },
-            { name: '马奎', emoji: '👮‍♂️', desc: '军统行动队队长', faction: '国军' },
-            { name: '穆晚秋', emoji: '👩‍🎓', desc: '大家闺秀，后加入共产党', faction: '中共' },
-            { name: '谢若林', emoji: '🕴️', desc: '黑市商人，倒卖情报', faction: '中立' },
-            { name: '廖三民', emoji: '👨‍🔧', desc: '天津站副官，共产党员', faction: '中共' },
-            { name: '秋掌柜', emoji: '👴', desc: '中共地下联络员', faction: '中共' },
-            { name: '周亚夫', emoji: '👨‍🎤', desc: '中共地下党员', faction: '中共' }
+            {
+                name: '余则成',
+                emoji: '👨‍💼',
+                desc: '军统天津站副站长，实际是中共地下党员"深海"',
+                faction: '中共',
+                background: '你曾就读于燕京大学，与左蓝是恋人。刺杀叛徒李海丰后加入军统，后来信仰共产主义，成为潜伏在军统的地下党员。与翠平假扮夫妻多年，最终产生真感情。天津解放前被吴站长裹挟去台湾，继续潜伏。',
+                personality: '沉稳内敛、足智多谋、忠诚坚定'
+            },
+            {
+                name: '翠平',
+                emoji: '👩',
+                desc: '余则成的假妻子，中共女游击队员',
+                faction: '中共',
+                background: '你原名陈桃花，是冀中根据地的女游击队长。因为文化水平低，与受过高等教育的余则成在一起经常发生摩擦。但多年假夫妻下来，你们产生了真感情，最后秘密结婚。天津解放前被迫与余则成分离。',
+                personality: '直爽泼辣、敢爱敢恨、坚韧不屈'
+            },
+            {
+                name: '左蓝',
+                emoji: '👩‍💼',
+                desc: '余则成女友，中共地下党员，牺牲了',
+                faction: '中共',
+                background: '你是余则成的大学同学和恋人，后来也是中共地下党员。在执行任务时被马奎发现，在激战中不幸中弹牺牲。你的死让余则成悲痛欲绝，但更加坚定了他潜伏的决心。',
+                personality: '知性优雅、勇敢坚定、温柔深情'
+            },
+            {
+                name: '吴敬中',
+                emoji: '👮',
+                desc: '天津站站长，老谋深算的政客',
+                faction: '国军',
+                background: '你是军统（保密局）天津站站长，深谙官场之道。你贪污腐败、敛财自肥，对政治斗争早已厌倦，只想捞够钱远走高飞。你重用余则成，是因为他办事得力又不威胁你的地位。',
+                personality: '老奸巨滑、贪财怕死、深谙世故'
+            },
+            {
+                name: '李涯',
+                emoji: '👨‍💻',
+                desc: '军统（保密局）行动队队长',
+                faction: '国军',
+                background: '你从延安投诚过来，一心想证明自己的忠诚。你执着于抓"内鬼"，多次怀疑余则成但始终没有证据。你誓言"效忠党国"，最后被廖三民摔倒楼下牺牲。',
+                personality: '执着果敢、一根筋、忠于信仰'
+            },
+            {
+                name: '陆桥山',
+                emoji: '👨‍⚖️',
+                desc: '军统情报处主任',
+                faction: '国军',
+                background: '你是情报处主任，后来被调往南京。你与李涯争权夺利，互相拆台。天津站内部斗得你死我活。后来离开天津站去南京任职。',
+                personality: '阴险狡诈、善于钻营、离心离德'
+            },
+            {
+                name: '马奎',
+                emoji: '👮‍♂️',
+                desc: '军统行动队队长',
+                faction: '国军',
+                background: '你是行动队队长，曾带人搜捕共产党。后来被证实是"雪山"（共产党卧底），在逃跑时被击毙。你曾怀疑余则成是共产党，但最终没有确凿证据。',
+                personality: '鲁莽冲动、疑神疑鬼'
+            },
+            {
+                name: '穆晚秋',
+                emoji: '👩‍🎓',
+                desc: '大家闺秀，后加入共产党',
+                faction: '中共',
+                background: '你是穆连成的侄女，大家闺秀出身。曾被谢若林利用来刺激余则成。后来看清谢若林的真面目，对余则成产生真感情。最后加入共产党，与秋掌柜一起从事地下工作。',
+                personality: '外柔内刚、敢爱敢恨、知书达理'
+            },
+            {
+                name: '谢若林',
+                emoji: '🕴️',
+                desc: '黑市商人，倒卖情报',
+                faction: '中立',
+                background: '你是典型的投机商贩，在国共两党之间倒卖情报赚钱。你说过"两根金条放在一起，你分得清哪根是高尚的，哪根是龌龊的吗？"。最后被李涯杀掉。',
+                personality: '唯利是图、精明世故、及时行乐'
+            },
+            {
+                name: '廖三民',
+                emoji: '👨‍🔧',
+                desc: '天津站副官，共产党员',
+                faction: '中共',
+                background: '你是天津站副官，真实身份是中共地下党员。暗中配合余则成传递情报。最后为了保护余则成，与李涯同归于尽，摔下楼去。',
+                personality: '沉稳内敛、忠贞不屈、舍生取义'
+            },
+            {
+                name: '秋客栈',
+                emoji: '👴',
+                desc: '中共地下联络员',
+                faction: '中共',
+                background: '你是中共在天津的地下联络员，负责与余则成、廖三民传递情报。最后被保密局发现并杀害。',
+                personality: '慈祥沉稳、经验丰富、忠诚坚定'
+            },
+            {
+                name: '周亚夫',
+                emoji: '👨‍🎤',
+                desc: '中共地下党员',
+                faction: '中共',
+                background: '你是中共在天津的地下交通员，负责传递情报。与秋客栈单线联系。最后为保护组织英勇牺牲。',
+                personality: '机智勇敢、沉稳冷静'
+            }
         ];
 
         let currentCharacter = null;
@@ -266,19 +350,25 @@
                         messages: [
                             {
                                 role: 'system',
-                                content: `你正在扮演《潜伏》中的${currentCharacter.name}。
+                                content: `你正在扮演《潜伏》电视剧中的${currentCharacter.name}。
 
-角色信息：${currentCharacter.desc}
-阵营：${currentCharacter.faction}
+【角色背景】
+${currentCharacter.background}
 
-重要规则：
-1. 用户问你问题来猜你的身份
+【角色性格】
+${currentCharacter.personality}
+
+【基本信息】
+- 姓名：${currentCharacter.name}
+- 阵营：${currentCharacter.faction}
+
+【重要规则】
+1. 用户通过提问来猜测你的身份
 2. 只能回答"是"或"不是"，永远不能说出自己的名字！
-3. 按事实回答，不能撒谎，不能编造事实
+3. 按角色性格和背景回答，不能撒谎，不能编造事实
 4. 每句话不超过15个字
-5. 不能OOC，要符合角色性格
-6. 如果用户说"游戏结束"，告诉用户你是谁
-7. 10次机会用完还没猜出来时，告诉用户你的名字`
+5. 如果用户说"游戏结束"，告诉用户你是谁
+6. 10次机会用完还没猜出来时，告诉用户你的名字`
                             },
                             {
                                 role: 'user',
@@ -300,7 +390,7 @@
                     message === '你是陆桥山吗' || message === '你是廖三民吗' || 
                     message === '你是穆晚秋吗' || message === '你是谢若林吗' ||
                     message === '你是左蓝吗' || message === '你是马奎吗' ||
-                    message === '你是秋掌柜吗' || message === '你是周亚夫吗';
+                    message === '你是秋客栈吗' || message === '你是周亚夫吗';
                 
                 if (isGuessing) {
                     if (reply.includes('是') || reply.includes('对') || reply.includes('没错')) {
