@@ -232,6 +232,20 @@
             `;
         }
 
+        function checkGuess(message) {
+            const allNames = characters.map(c => c.name);
+            for (let name of allNames) {
+                if (message.includes(name)) {
+                    if (name === currentCharacter.name) {
+                        return { guessed: true, correct: true };
+                    } else {
+                        return { guessed: true, correct: false };
+                    }
+                }
+            }
+            return { guessed: false };
+        }
+
         async function sendMessage() {
             if (gameOver) return;
             if (chances <= 0) {
@@ -242,6 +256,9 @@
             const input = document.getElementById('user-input');
             const message = input.value.trim();
             if (!message) return;
+
+            // 检查是否在猜测
+            const guessResult = checkGuess(message);
 
             chances--;
             document.getElementById('chances').textContent = `还剩 ${chances} 次机会`;
@@ -257,68 +274,69 @@
             chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        messages: [
-                            {
-                                role: 'system',
-                                content: `你正在扮演《潜伏》中的${currentCharacter.name}。\n\n角色信息：${currentCharacter.desc}\n阵营：${currentCharacter.faction}\n\n游戏规则：\n1. 用户会问你问题来猜测你是谁\n2. 你必须以这个角色的语气回答\n3. 只能回答"是"或"不是"（或简短回答）\n4. 每句话不超过15个字\n5. 不能撒谎，不能编造事实\n6. 不能暴露自己的身份\n7. 如果用户猜对了，告诉他们你是谁\n8. 如果用户说"游戏结束"，告诉他们正确答案并结束游戏`
-                            },
-                            {
-                                role: 'user',
-                                content: message
-                            }
-                        ]
-                    })
-                });
+                let reply;
+                
+                if (guessResult.guessed) {
+                    // 用户在猜测，直接给出答案
+                    if (guessResult.correct) {
+                        reply = '是';
+                        setTimeout(() => endGame(true), 500);
+                    } else {
+                        reply = '不是';
+                    }
+                } else if (message === '游戏结束' || message.includes('游戏结束')) {
+                    reply = '再见';
+                    setTimeout(() => endGame(false), 500);
+                } else if (chances <= 0) {
+                    reply = '我是' + currentCharacter.name;
+                    setTimeout(() => endGame(false, '次数用尽！'), 500);
+                } else {
+                    // 正常问答
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            messages: [
+                                {
+                                    role: 'system',
+                                    content: `你正在扮演《潜伏》中的${currentCharacter.name}。
 
-                const data = await response.json();
-                chatBox.removeChild(chatBox.lastChild);
-                
-                let reply = data.choices?.[0]?.message?.content || '这个问题我不能回答。';
-                
-                // 检查是否猜对了
-                const isGuessing = message.includes(currentCharacter.name) || 
-                    message === '你是余则成吗' || message === '你是翠平吗' || 
-                    message === '你是吴敬中吗' || message === '你是李涯吗' || 
-                    message === '你是陆桥山吗' || message === '你是廖三民吗' || 
-                    message === '你是穆晚秋吗' || message === '你是谢若林吗' ||
-                    message === '你是左蓝吗' || message === '你是马奎吗' ||
-                    message === '你是秋掌柜吗' || message === '你是周亚夫吗';
-                
-                if (isGuessing) {
-                    if (reply.includes('是') || reply.includes('对') || reply.includes('没错')) {
-                        endGame(true);
-                        return;
+角色信息：${currentCharacter.desc}
+阵营：${currentCharacter.faction}
+
+重要规则：
+1. 用户在猜测你的身份，只能回答"是"或"不是"
+2. 如果用户问"你是XXX吗"，只有XXX等于"${currentCharacter.name}"才能回答"是"
+3. 其他问题只能回答"是"或"不是"
+4. 每句话不超过15个字
+5. 不能撒谎，不能暴露身份
+6. 保持角色性格`
+                                },
+                                {
+                                    role: 'user',
+                                    content: message
+                                }
+                            ]
+                        })
+                    });
+
+                    const data = await response.json();
+                    reply = data.choices?.[0]?.message?.content || '是或不是';
+                    
+                    // 限制15字
+                    if (reply.length > 15) {
+                        reply = reply.substring(0, 15);
                     }
                 }
                 
-                // 检查是否说游戏结束
-                if (message === '游戏结束' || message.includes('游戏结束')) {
-                    endGame(false);
-                    return;
-                }
-                
-                // 检查次数是否用尽
-                if (chances <= 0) {
-                    endGame(false, '次数用尽！');
-                    return;
-                }
-                
-                // 限制15字
-                if (reply.length > 15) {
-                    reply = reply.substring(0, 15);
-                }
-                
+                chatBox.removeChild(chatBox.lastChild);
                 chatBox.innerHTML += `<div class="message bot">${reply}</div>`;
                 chatBox.scrollTop = chatBox.scrollHeight;
             } catch (error) {
                 chatBox.removeChild(chatBox.lastChild);
-                chatBox.innerHTML += `<div class="message bot">出错了，请再说一次。</div>`;
+                chatBox.innerHTML += `<div class="message bot">出错了</div>`;
                 chances++;
                 document.getElementById('chances').textContent = `还剩 ${chances} 次机会`;
             }
