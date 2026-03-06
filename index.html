@@ -39,6 +39,13 @@
             margin-bottom: 30px;
             font-size: 14px;
         }
+        .chances {
+            text-align: center;
+            color: #c41e3a;
+            font-size: 16px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
         .rules {
             background: #fff3cd;
             padding: 15px;
@@ -147,6 +154,12 @@
             color: #666;
             padding: 20px;
         }
+        .hint-btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-top: 10px;
+            background: #4caf50;
+        }
     </style>
 </head>
 <body>
@@ -160,6 +173,7 @@
                 <li>我扮演《潜伏》中的一个角色</li>
                 <li>你问我问题，我只能回答"是"或"不是"</li>
                 <li>每句话不超过15字</li>
+                <li>共10次提问机会</li>
                 <li>猜对了就告诉你我是谁</li>
                 <li>说"游戏结束"就结束</li>
             </ul>
@@ -168,6 +182,7 @@
         <button class="start-btn" onclick="startGame()">开始游戏</button>
 
         <div id="game-area">
+            <div class="chances" id="chances">还剩 10 次机会</div>
             <div class="chat-box" id="chat-box"></div>
             <div class="input-area">
                 <input type="text" id="user-input" placeholder="问我问题..." onkeypress="handleKeyPress(event)">
@@ -187,41 +202,56 @@
         const API_KEY = 'sk-cp-YnBV3Kjn-fvJLPBz92qsaWkMKBXmQ2rjPFu_F70EFXwE7iXHGkfnI83Scj89TMcBXfXpxlrUjda5jPOl1as_mpcQ7W31gx4tiKqDF20qR96ePgj3iFsjE-I';
         const API_URL = 'https://api.minimaxi.com/v1/text/chatcompletion_v2';
 
+        // 潜伏角色列表 - 修正版
         const characters = [
-            { name: '余则成', emoji: '👨‍💼', desc: '潜伏在军统的共产党特工' },
-            { name: '翠平', emoji: '👩', desc: '余则成的假妻子' },
-            { name: '吴敬中', emoji: '👮', desc: '天津站站长' },
-            { name: '李涯', emoji: '👨‍💻', desc: '军统行动队队长' },
-            { name: '陆桥山', emoji: '👨‍⚖️', desc: '军统情报处主任' },
-            { name: '廖三民', emoji: '👨‍🔧', desc: '天津站副官' },
-            { name: '穆晚秋', emoji: '👩‍💼', desc: '大家闺秀' },
-            { name: '谢若琳', emoji: '🕴️', desc: '黑市商人' }
+            { name: '余则成', emoji: '👨‍💼', desc: '军统天津站副站长，实际是中共地下党员', faction: '中共' },
+            { name: '翠平', emoji: '👩', desc: '余则成假妻子，中共女游击队员', faction: '中共' },
+            { name: '左蓝', emoji: '👩‍💼', desc: '余则成女友，中共地下党员，牺牲了', faction: '中共' },
+            { name: '吴敬中', emoji: '👮', desc: '天津站站长，老谋深算', faction: '国军' },
+            { name: '李涯', emoji: '👨‍💻', desc: '军统行动队队长，执着果敢', faction: '国军' },
+            { name: '陆桥山', emoji: '👨‍⚖️', desc: '军统情报处主任', faction: '国军' },
+            { name: '马奎', emoji: '👮‍♂️', desc: '军统行动队队长', faction: '国军' },
+            { name: '穆晚秋', emoji: '👩‍🎓', desc: '大家闺秀，后加入共产党', faction: '中共' },
+            { name: '谢若林', emoji: '🕴️', desc: '黑市商人，倒卖情报', faction: '中立' },
+            { name: '廖三民', emoji: '👨‍🔧', desc: '天津站副官，共产党员', faction: '中共' },
+            { name: '秋掌柜', emoji: '👴', desc: '中共地下联络员', faction: '中共' },
+            { name: '周亚夫', emoji: '👨‍🎤', desc: '中共地下党员', faction: '中共' }
         ];
 
         let currentCharacter = null;
         let gameOver = false;
+        let chances = 10;
 
         function startGame() {
             currentCharacter = characters[Math.floor(Math.random() * characters.length)];
             gameOver = false;
+            chances = 10;
             
             document.querySelector('.start-btn').style.display = 'none';
             document.querySelector('.rules').style.display = 'none';
             document.getElementById('game-area').style.display = 'block';
             document.getElementById('result-area').style.display = 'none';
+            document.getElementById('chances').textContent = `还剩 ${chances} 次机会`;
             
             const chatBox = document.getElementById('chat-box');
             chatBox.innerHTML = `
-                <div class="message system">游戏开始！我准备好了，你问吧。</div>
+                <div class="message system">游戏开始！我准备好了，你问吧。（共${chances}次机会）</div>
             `;
         }
 
         async function sendMessage() {
             if (gameOver) return;
+            if (chances <= 0) {
+                endGame(false, '次数用尽！');
+                return;
+            }
             
             const input = document.getElementById('user-input');
             const message = input.value.trim();
             if (!message) return;
+
+            chances--;
+            document.getElementById('chances').textContent = `还剩 ${chances} 次机会`;
 
             const chatBox = document.getElementById('chat-box');
             chatBox.innerHTML += `<div class="message user">${message}</div>`;
@@ -245,7 +275,7 @@
                         messages: [
                             {
                                 role: 'system',
-                                content: `你正在扮演《潜伏》中的${currentCharacter.name}。\n\n游戏规则：\n1. 用户会问你问题来猜测你是谁\n2. 你必须以这个角色的语气回答\n3. 只能回答"是"或"不是"（或简短回答）\n4. 每句话不超过15个字\n5. 不能撒谎，不能编造事实\n6. 不能暴露自己的身份\n7. 如果用户猜对了，告诉他们你是谁\n8. 如果用户说"游戏结束"，告诉他们正确答案并结束游戏\n\n注意：严格按照角色性格回答，保持角色一致性。`
+                                content: `你正在扮演《潜伏》中的${currentCharacter.name}。\n\n角色信息：${currentCharacter.desc}\n阵营：${currentCharacter.faction}\n\n游戏规则：\n1. 用户会问你问题来猜测你是谁\n2. 你必须以这个角色的语气回答\n3. 只能回答"是"或"不是"（或简短回答）\n4. 每句话不超过15个字\n5. 不能撒谎，不能编造事实\n6. 不能暴露自己的身份\n7. 如果用户猜对了，告诉他们你是谁\n8. 如果用户说"游戏结束"，告诉他们正确答案并结束游戏`
                             },
                             {
                                 role: 'user',
@@ -262,8 +292,16 @@
                 let reply = data.choices?.[0]?.message?.content || '这个问题我不能回答。';
                 
                 // 检查是否猜对了
-                if (message.includes(currentCharacter.name) || message === '你是余则成吗' || message === '你是翠平吗' || message === '你是吴敬中吗' || message === '你是李涯吗' || message === '你是陆桥山吗' || message === '你是廖三民吗' || message === '你是穆晚秋吗' || message === '你是谢若琳吗') {
-                    if (reply.includes('是') || reply.includes('对')) {
+                const isGuessing = message.includes(currentCharacter.name) || 
+                    message === '你是余则成吗' || message === '你是翠平吗' || 
+                    message === '你是吴敬中吗' || message === '你是李涯吗' || 
+                    message === '你是陆桥山吗' || message === '你是廖三民吗' || 
+                    message === '你是穆晚秋吗' || message === '你是谢若琳吗' ||
+                    message === '你是左蓝吗' || message === '你是马奎吗' ||
+                    message === '你是秋掌柜吗' || message === '你是周亚夫吗';
+                
+                if (isGuessing) {
+                    if (reply.includes('是') || reply.includes('对') || reply.includes('没错')) {
                         endGame(true);
                         return;
                     }
@@ -272,6 +310,12 @@
                 // 检查是否说游戏结束
                 if (message === '游戏结束' || message.includes('游戏结束')) {
                     endGame(false);
+                    return;
+                }
+                
+                // 检查次数是否用尽
+                if (chances <= 0) {
+                    endGame(false, '次数用尽！');
                     return;
                 }
                 
@@ -285,23 +329,27 @@
             } catch (error) {
                 chatBox.removeChild(chatBox.lastChild);
                 chatBox.innerHTML += `<div class="message bot">出错了，请再说一次。</div>`;
+                chances++; // 失败不扣次数
+                document.getElementById('chances').textContent = `还剩 ${chances} 次机会`;
             }
 
             sendBtn.disabled = false;
             input.focus();
         }
 
-        function endGame(guessed) {
+        function endGame(guessed, extraMsg = '') {
             gameOver = true;
             const chatBox = document.getElementById('chat-box');
-            chatBox.innerHTML += `<div class="message system">游戏结束！我是${currentCharacter.name}。</div>`;
+            let msg = guessed ? '恭喜你猜对了！' : '游戏结束！';
+            if (extraMsg) msg = extraMsg;
+            chatBox.innerHTML += `<div class="message system">${msg} 我是${currentCharacter.name}。</div>`;
             
             setTimeout(() => {
                 document.getElementById('game-area').style.display = 'none';
                 document.getElementById('result-area').style.display = 'block';
                 document.getElementById('character-emoji').textContent = currentCharacter.emoji;
                 document.getElementById('character-name').textContent = currentCharacter.name;
-                document.getElementById('character-desc').textContent = currentCharacter.desc;
+                document.getElementById('character-desc').textContent = currentCharacter.desc + '（' + currentCharacter.faction + '）';
             }, 1500);
         }
 
