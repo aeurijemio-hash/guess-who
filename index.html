@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>潜伏猜人游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #c41e3a;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .rules {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #856404;
+        }
+        .rules li {
+            margin: 5px 0;
+            margin-left: 20px;
+        }
+        #game-area {
+            display: none;
+        }
+        .chat-box {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 12px 16px;
+            border-radius: 10px;
+            max-width: 80%;
+            line-height: 1.5;
+        }
+        .message.bot {
+            background: #e8f5e9;
+            margin-right: auto;
+        }
+        .message.user {
+            background: #c41e3a;
+            color: white;
+            margin-left: auto;
+        }
+        .message.system {
+            background: #fff3cd;
+            color: #856404;
+            text-align: center;
+            max-width: 100%;
+        }
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+        }
+        input:focus {
+            border-color: #c41e3a;
+        }
+        button {
+            padding: 12px 30px;
+            background: #c41e3a;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #a01830;
+        }
+        button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+        .start-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+        #result-area {
+            display: none;
+            text-align: center;
+        }
+        #result-area h2 {
+            color: #c41e3a;
+            margin-bottom: 20px;
+        }
+        .character-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: #ddd;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎭 潜伏猜人游戏</h1>
+        <p class="subtitle">我是《潜伏》里的谁？</p>
+        
+        <div class="rules">
+            <strong>游戏规则：</strong>
+            <ul>
+                <li>我扮演《潜伏》中的一个角色</li>
+                <li>你问我问题，我只能回答"是"或"不是"</li>
+                <li>每句话不超过15字</li>
+                <li>猜对了就告诉你我是谁</li>
+                <li>说"游戏结束"就结束</li>
+            </ul>
+        </div>
+
+        <button class="start-btn" onclick="startGame()">开始游戏</button>
+
+        <div id="game-area">
+            <div class="chat-box" id="chat-box"></div>
+            <div class="input-area">
+                <input type="text" id="user-input" placeholder="问我问题..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()" id="send-btn">发送</button>
+            </div>
+        </div>
+
+        <div id="result-area">
+            <div class="character-img" id="character-emoji">🎭</div>
+            <h2 id="character-name"></h2>
+            <p id="character-desc"></p>
+            <button class="start-btn" onclick="restartGame()">再来一局</button>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'sk-cp-YnBV3Kjn-fvJLPBz92qsaWkMKBXmQ2rjPFu_F70EFXwE7iXHGkfnI83Scj89TMcBXfXpxlrUjda5jPOl1as_mpcQ7W31gx4tiKqDF20qR96ePgj3iFsjE-I';
+        const API_URL = 'https://api.minimaxi.com/v1/text/chatcompletion_v2';
+
+        const characters = [
+            { name: '余则成', emoji: '👨‍💼', desc: '潜伏在军统的共产党特工' },
+            { name: '翠平', emoji: '👩', desc: '余则成的假妻子' },
+            { name: '吴敬中', emoji: '👮', desc: '天津站站长' },
+            { name: '李涯', emoji: '👨‍💻', desc: '军统行动队队长' },
+            { name: '陆桥山', emoji: '👨‍⚖️', desc: '军统情报处主任' },
+            { name: '廖三民', emoji: '👨‍🔧', desc: '天津站副官' },
+            { name: '穆晚秋', emoji: '👩‍💼', desc: '大家闺秀' },
+            { name: '谢若琳', emoji: '🕴️', desc: '黑市商人' }
+        ];
+
+        let currentCharacter = null;
+        let gameOver = false;
+
+        function startGame() {
+            currentCharacter = characters[Math.floor(Math.random() * characters.length)];
+            gameOver = false;
+            
+            document.querySelector('.start-btn').style.display = 'none';
+            document.querySelector('.rules').style.display = 'none';
+            document.getElementById('game-area').style.display = 'block';
+            document.getElementById('result-area').style.display = 'none';
+            
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML = `
+                <div class="message system">游戏开始！我准备好了，你问吧。</div>
+            `;
+        }
+
+        async function sendMessage() {
+            if (gameOver) return;
+            
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML += `<div class="message user">${message}</div>`;
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const sendBtn = document.getElementById('send-btn');
+            sendBtn.disabled = true;
+            chatBox.innerHTML += '<div class="loading">思考中...</div>';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'MiniMax-M2.5',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: `你正在扮演《潜伏》中的${currentCharacter.name}。\n\n游戏规则：\n1. 用户会问你问题来猜测你是谁\n2. 你必须以这个角色的语气回答\n3. 只能回答"是"或"不是"（或简短回答）\n4. 每句话不超过15个字\n5. 不能撒谎，不能编造事实\n6. 不能暴露自己的身份\n7. 如果用户猜对了，告诉他们你是谁\n8. 如果用户说"游戏结束"，告诉他们正确答案并结束游戏\n\n注意：严格按照角色性格回答，保持角色一致性。`
+                            },
+                            {
+                                role: 'user',
+                                content: message
+                            }
+                        ],
+                        temperature: 0.7
+                    })
+                });
+
+                const data = await response.json();
+                chatBox.removeChild(chatBox.lastChild);
+                
+                let reply = data.choices?.[0]?.message?.content || '这个问题我不能回答。';
+                
+                // 检查是否猜对了
+                if (message.includes(currentCharacter.name) || message === '你是余则成吗' || message === '你是翠平吗' || message === '你是吴敬中吗' || message === '你是李涯吗' || message === '你是陆桥山吗' || message === '你是廖三民吗' || message === '你是穆晚秋吗' || message === '你是谢若琳吗') {
+                    if (reply.includes('是') || reply.includes('对')) {
+                        endGame(true);
+                        return;
+                    }
+                }
+                
+                // 检查是否说游戏结束
+                if (message === '游戏结束' || message.includes('游戏结束')) {
+                    endGame(false);
+                    return;
+                }
+                
+                // 限制15字
+                if (reply.length > 15) {
+                    reply = reply.substring(0, 15);
+                }
+                
+                chatBox.innerHTML += `<div class="message bot">${reply}</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            } catch (error) {
+                chatBox.removeChild(chatBox.lastChild);
+                chatBox.innerHTML += `<div class="message bot">出错了，请再说一次。</div>`;
+            }
+
+            sendBtn.disabled = false;
+            input.focus();
+        }
+
+        function endGame(guessed) {
+            gameOver = true;
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML += `<div class="message system">游戏结束！我是${currentCharacter.name}。</div>`;
+            
+            setTimeout(() => {
+                document.getElementById('game-area').style.display = 'none';
+                document.getElementById('result-area').style.display = 'block';
+                document.getElementById('character-emoji').textContent = currentCharacter.emoji;
+                document.getElementById('character-name').textContent = currentCharacter.name;
+                document.getElementById('character-desc').textContent = currentCharacter.desc;
+            }, 1500);
+        }
+
+        function restartGame() {
+            document.getElementById('result-area').style.display = 'none';
+            document.querySelector('.start-btn').style.display = 'block';
+            document.querySelector('.rules').style.display = 'block';
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>
