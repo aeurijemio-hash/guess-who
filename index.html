@@ -58,6 +58,30 @@
             margin: 5px 0;
             margin-left: 20px;
         }
+        .setup-area {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .setup-area label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #1565c0;
+        }
+        .setup-area input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .setup-area p {
+            font-size: 12px;
+            color: #666;
+        }
         #game-area {
             display: none;
         }
@@ -154,12 +178,6 @@
             color: #666;
             padding: 20px;
         }
-        .hint-btn {
-            padding: 8px 16px;
-            font-size: 14px;
-            margin-top: 10px;
-            background: #4caf50;
-        }
     </style>
 </head>
 <body>
@@ -167,7 +185,14 @@
         <h1>🎭 潜伏猜人游戏</h1>
         <p class="subtitle">我是《潜伏》里的谁？</p>
         
-        <div class="rules">
+        <div class="setup-area" id="setup-area">
+            <label>🔑 首次使用请输入 API Key：</label>
+            <input type="password" id="api-key" placeholder="sk-cp-xxx">
+            <button onclick="saveApiKey()" style="width:100%">保存并开始</button>
+            <p>💡 API Key 仅保存在浏览器本地，不会发送给任何人</p>
+        </div>
+
+        <div class="rules" id="rules" style="display:none">
             <strong>游戏规则：</strong>
             <ul>
                 <li>我扮演《潜伏》中的一个角色</li>
@@ -179,7 +204,7 @@
             </ul>
         </div>
 
-        <button class="start-btn" onclick="startGame()">开始游戏</button>
+        <button class="start-btn" id="start-btn" onclick="startGame()" style="display:none">开始游戏</button>
 
         <div id="game-area">
             <div class="chances" id="chances">还剩 10 次机会</div>
@@ -199,10 +224,11 @@
     </div>
 
     <script>
-        const API_KEY = 'sk-cp-YnBV3Kjn-fvJLPBz92qsaWkMKBXmQ2rjPFu_F70EFXwE7iXHGkfnI83Scj89TMcBXfXpxlrUjda5jPOl1as_mpcQ7W31gx4tiKqDF20qR96ePgj3iFsjE-I';
-        const API_URL = 'https://api.minimaxi.com/v1/text/chatcompletion_v2';
+        // 从本地存储获取 API Key
+        let API_KEY = localStorage.getItem('minimax_api_key');
+        const API_URL = '/api/chat';
 
-        // 潜伏角色列表 - 修正版
+        // 潜伏角色列表
         const characters = [
             { name: '余则成', emoji: '👨‍💼', desc: '军统天津站副站长，实际是中共地下党员', faction: '中共' },
             { name: '翠平', emoji: '👩', desc: '余则成假妻子，中共女游击队员', faction: '中共' },
@@ -222,13 +248,34 @@
         let gameOver = false;
         let chances = 10;
 
+        // 检查是否已有 API Key
+        if (API_KEY) {
+            document.getElementById('setup-area').style.display = 'none';
+            document.getElementById('rules').style.display = 'block';
+            document.getElementById('start-btn').style.display = 'block';
+        }
+
+        function saveApiKey() {
+            const input = document.getElementById('api-key');
+            const key = input.value.trim();
+            if (key.startsWith('sk-cp-')) {
+                localStorage.setItem('minimax_api_key', key);
+                API_KEY = key;
+                document.getElementById('setup-area').style.display = 'none';
+                document.getElementById('rules').style.display = 'block';
+                document.getElementById('start-btn').style.display = 'block';
+            } else {
+                alert('请输入有效的 MiniMax API Key（以 sk-cp- 开头）');
+            }
+        }
+
         function startGame() {
             currentCharacter = characters[Math.floor(Math.random() * characters.length)];
             gameOver = false;
             chances = 10;
             
-            document.querySelector('.start-btn').style.display = 'none';
-            document.querySelector('.rules').style.display = 'none';
+            document.getElementById('start-btn').style.display = 'none';
+            document.getElementById('rules').style.display = 'none';
             document.getElementById('game-area').style.display = 'block';
             document.getElementById('result-area').style.display = 'none';
             document.getElementById('chances').textContent = `还剩 ${chances} 次机会`;
@@ -240,6 +287,10 @@
         }
 
         async function sendMessage() {
+            if (!API_KEY) {
+                alert('请先输入 API Key');
+                return;
+            }
             if (gameOver) return;
             if (chances <= 0) {
                 endGame(false, '次数用尽！');
@@ -267,11 +318,9 @@
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${API_KEY}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        model: 'MiniMax-M2.5',
                         messages: [
                             {
                                 role: 'system',
@@ -281,8 +330,7 @@
                                 role: 'user',
                                 content: message
                             }
-                        ],
-                        temperature: 0.7
+                        ]
                     })
                 });
 
@@ -329,7 +377,7 @@
             } catch (error) {
                 chatBox.removeChild(chatBox.lastChild);
                 chatBox.innerHTML += `<div class="message bot">出错了，请再说一次。</div>`;
-                chances++; // 失败不扣次数
+                chances++;
                 document.getElementById('chances').textContent = `还剩 ${chances} 次机会`;
             }
 
@@ -355,8 +403,8 @@
 
         function restartGame() {
             document.getElementById('result-area').style.display = 'none';
-            document.querySelector('.start-btn').style.display = 'block';
-            document.querySelector('.rules').style.display = 'block';
+            document.getElementById('start-btn').style.display = 'block';
+            document.getElementById('rules').style.display = 'block';
         }
 
         function handleKeyPress(event) {
